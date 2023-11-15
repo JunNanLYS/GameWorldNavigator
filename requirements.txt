@@ -1,0 +1,6 @@
+pynput>=1.7.6
+pywin32>=306
+opencv-python>=4.8.1.78
+Pillow>=10.1.0
+numpy>=1.26.1
+PyAutoGUI>=0.9.54
