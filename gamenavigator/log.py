@@ -3,7 +3,7 @@ import logging
 from . import config
 
 # 使用logger记录日志
-log = logging.getLogger("GameWorldNavigation")
+log = logging.getLogger("GameWorldNavigator")
 
 
 def debug(mes):

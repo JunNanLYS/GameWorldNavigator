@@ -11,24 +11,24 @@ def __to_ndarray(img: Union[str, np.ndarray, MatLike]) -> Union[np.ndarray, MatL
     return img
 
 
-def match_template(img: Union[str, np.ndarray, MatLike], template: Union[str, np.ndarray, MatLike], *args, **kwargs) \
-        -> tuple:
+def match_template(img: Union[str, np.ndarray, MatLike], template: Union[str, np.ndarray, MatLike], **kwargs) -> tuple:
     """图像匹配
     使用的是cv2的模板匹配，必须要保证 img 和 template 是属于同一种类型图像，即都是灰度图或彩色图，且大小一致。
     使用的是cv2.TM_CCOEFF_NORMED进行模板匹配，可以通过修改method来自定义模板匹配。图像必须是BGR格式
 
-    接受一下几种关键词：
-    method: 模板匹配方法，默认是TM_CCOEFF_NORMED  str类型
-    mode: 匹配模式，它接受 default gray binary 这三种值,默认模式是default  str类型
-    thresh: 只有在二值图模式下才有用  int类型
-    max_val: 只有在二值图模式下才有用  int类型
+    Keyword Arguments:
+        method (str): 模板匹配方法，默认是TM_CCOEFF_NORMED  str类型
+        mode (str): 匹配模式 color binary gray (default color)
+        thresh (int): 只有在二值图模式下才有用  int类型
+        max_val (int): 只有在二值图模式下才有用  int类型
 
-    返回一个tuple类型 (min_val, max_val, min_loc, max_loc)
+    Returns:
+        min_val, max_val, min_loc, max_loc
     """
     if not isinstance(img, (str, np.ndarray, MatLike)):
-        raise TypeError("only accept  str or np.ndarray or MatLike")
+        raise TypeError("only accept str or np.ndarray or MatLike")
     elif not isinstance(template, (str, np.ndarray, MatLike)):
-        raise TypeError("only accept  str or np.ndarray or MatLike")
+        raise TypeError("only accept str or np.ndarray or MatLike")
 
     img = __to_ndarray(img)
     template = __to_ndarray(template)
@@ -36,8 +36,8 @@ def match_template(img: Union[str, np.ndarray, MatLike], template: Union[str, np
     method = kwargs.get("method", cv2.TM_CCOEFF_NORMED)
     methods = ("TM_SQDIFF", "TM_SQDIFF_NORMED", "TM_CCOEFF_NORMED",
                "TM_CCORR_NORMED", "TM_CCORR", "TM_CCOEFF")
-    mode = kwargs.get("mode", "default")
-    modes = ("default", "gray", "binary")
+    mode = kwargs.get("mode", "color")
+    modes = ("color", "gray", "binary")
 
     # 判断传入的关键词是否支持
     if method not in methods:
@@ -63,7 +63,7 @@ def match_template(img: Union[str, np.ndarray, MatLike], template: Union[str, np
         template_gray = None
     # 若模式需要灰度图则先将彩色图转换成灰度图
 
-    if mode == "default":
+    if mode == "color":
         if i_channel != 3 or t_channel != 3:
             raise ValueError("Image or template channels not equal to 3")
         res = cv2.matchTemplate(img, template, method)

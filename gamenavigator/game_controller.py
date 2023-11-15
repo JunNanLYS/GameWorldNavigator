@@ -15,7 +15,7 @@ from cv2.typing import MatLike
 from numpy import ndarray, array
 
 from .core import Pos, Rect
-from .keyboard_mouse_simulation import (mouse_click_position, mouse_move_to, keyboard_press,
+from .keyboard_mouse_simulation import (mouse_click_position, mouse_move_to, mouse_press_and_move, keyboard_press,
                                         keyboard_down, keyboard_up)
 from .image_recognition import match_template
 from .exception import TemplateMathingFailure, WindowOutOfBoundsError
@@ -113,17 +113,23 @@ class GameController:
     def __init__(self, game_class: Union[str, None], game_name: str, debug=False, filename=""):
         """
         将debug设置为True后需要设置filename才会将调试信息保存
-        :param game_class: 游戏类型
-        :param game_name: 游戏名称
-        :param debug: 调试模式
-        :param filename: 调试模式存储的文件路径
+
+        Args:
+            game_class(str, None): 游戏类型
+            game_name (str): 游戏名称
+            debug (bool): 调试模式
+            filename (str): 调试模式存储的文件路径
         """
         self.game = Game(game_class, game_name)
         self.debug = debug
         self.filename = filename
 
     def click_pos(self, pos: Pos) -> None:
-        """ 模拟鼠标点击游戏内坐标API """
+        """模拟鼠标点击游戏内坐标API
+
+        Args:
+            pos (Pos): 坐标
+        """
         self.set_foreground()
         try:
             self._click_pos(pos)
@@ -132,7 +138,17 @@ class GameController:
             raise WindowOutOfBoundsError(e)
 
     def click_image(self, *images: Union[str, ndarray, MatLike], **kwargs):
-        """ 模拟鼠标点击游戏内图片API """
+        """模拟鼠标点击游戏内图片API
+
+        鼠标点击图片中心位置
+
+        Args:
+            images (str, ndarray, MatLike): 图像
+
+        Keyword Arguments:
+            threshold (int, float): 匹配阈值(default 0.8)
+            mode (str): 匹配模式(default)
+        """
         self.set_foreground()
         try:
             self._click_image(*images, **kwargs)
@@ -140,12 +156,19 @@ class GameController:
             self.image_debug("Error")
             raise TemplateMathingFailure(e)
 
-    def down_keyboard_time(self, key: str, stop_time: float, thread=False):
+    def down_keyboard_time(self, key: str, stop_time: float, thread=False) -> Union[None, Thread]:
         """模拟按压键盘的时间
-        :param key: 键盘按键
-        :param stop_time: 按压时长
-        :param thread: True开启子线程 | False不开启子线程
-        :return: 若开启子线程则返回子线程实例，反之返回None
+
+        开启线程后将在子线程中运行从而不阻塞主线程，因为这个按压时间是通过time.sleep()实现的
+
+        Args:
+            key (str): 键盘按键
+            stop_time (float): 按压时间
+            thread (bool): 开启线程(default False)
+
+        Returns:
+            None | Thread
+
         """
         self.set_foreground()
 
@@ -186,7 +209,14 @@ class GameController:
         return self.game.screenshot
 
     def mouse_move_to(self, pos: Pos, duration: float) -> None:
-        """ 模拟鼠标移动API """
+        """模拟鼠标移动API
+
+        鼠标从当前位置移动到pos持续duration
+
+        Args:
+            pos (Pos): 坐标
+            duration (float): 持续时间
+        """
         self.set_foreground()
         try:
             self._mouse_move_to(pos, duration)
@@ -194,15 +224,45 @@ class GameController:
             self.image_debug("Error")
             raise WindowOutOfBoundsError(e)
 
+    def mouse_press_and_move(self, start: Pos, end: Pos) -> None:
+        """按压鼠标并移动到end松开API"""
+        self.set_foreground()
+        start = self._to_game_pos(start)
+        end = self._to_game_pos(end)
+        mouse_press_and_move(start, end)
+
+    def wait_image(self, *images: Union[str, ndarray, MatLike], **kwargs) -> None:
+        """等待游戏内图片API
+
+        Args:
+            images: (str, ndarray, MatLike)可以多张图片，也可以单张图片
+
+        Keyword Arguments:
+            all (bool): True等待所有图片，False其中一个图片(default False)
+            timeout (int, float): 等待时间(default 60)
+            spacing (int, float): 每次匹配时间间隔(default 1)
+            threshold (int, float): 达到该阈值算匹配成功(default 0.8)
+            mode (str): 匹配模式
+
+        Raises:
+            TimeoutError: 超时
+        """
+        self.set_foreground()
+        try:
+            self._wait_image(*images, **kwargs)
+        except TimeoutError as e:
+            self.image_debug("Error")
+            raise TimeoutError(e)
+
     def _click_pos(self, pos: Pos):
         """ 点击游戏内某个坐标 """
-        game_pos = self.__to_game_pos(pos)
+        game_pos = self._to_game_pos(pos)
         mouse_click_position(game_pos)
 
     def _click_image(self, *images: Union[str, ndarray, MatLike], **kwargs):
         """ 点击游戏内图片 """
         threshold = kwargs.get("threshold", 0.8)
-        mode = kwargs.get("mode", "default")
+        mode = kwargs.get("mode", "color")
         screenshot = self.game.get_screenshot()
         v, p = 0, Pos(0, 0)
         log.debug(f"click image: threshold={threshold}, mode={mode}")
@@ -219,12 +279,57 @@ class GameController:
                 w, h = screenshot.shape[:1]
                 center = Pos(max_loc[0] + w // 2, max_loc[1] + h // 2)
                 self.click_pos(center)
+        log.error(f"template matching failure, max value is {v}")
         raise TemplateMathingFailure(f"Threshold: {v} < {threshold}, GamePos: {p}")
 
     def _mouse_move_to(self, pos: Pos, duration: float) -> None:
         """ 将鼠标移动至某坐标点上 """
-        game_pos = self.__to_game_pos(pos)
+        game_pos = self._to_game_pos(pos)
         mouse_move_to(game_pos, duration)
+
+    def _to_game_pos(self, pos: Pos) -> Pos:
+        """ 将坐标转换成游戏坐标 """
+        if pos.is_game:
+            return pos
+        rect = self.game.get_rect()
+        x1, y1 = pos.x, pos.y
+        x2, y2 = x1 + rect.left, y1 + rect.top
+        game_pos = Pos(x2, y2)
+        # 坐标转换成游戏内坐标
+        if x2 < rect.left or x2 > rect.right or y2 < rect.top or y2 > rect.bottom:
+            log.error(f"The given coordinate ({x2}, {y2}) is outside")
+            raise WindowOutOfBoundsError(f"The given coordinate ({x2}, {y2}) is outside "
+                                         f"the game window bounds "
+                                         f"({rect.left}, {rect.top}) - ({rect.right}, {rect.bottom})")
+            # 给出的坐标超出游戏窗口范围
+        return game_pos
+
+    def _wait_image(self, *images: Union[str, ndarray, MatLike], **kwargs) -> None:
+        """ 等待图片 """
+        all_ = kwargs.get("all", False)
+        threshold = kwargs.get("threshold", 0.8)
+        mode = kwargs.get("mode", "color")
+        timeout = kwargs.get("timeout", 60)  # second
+        spacing = kwargs.get("spacing", 1)  # second
+        start_time = time.time()
+        length = len(images)
+
+        while time.time() - start_time <= timeout:
+            count = 0
+            for image in images:
+                screenshot = self.game.get_screenshot()
+                _, max_val, _, max_loc = match_template(screenshot, image, mode=mode)
+                if max_val >= threshold:
+                    count += 1
+                    if not all_:
+                        # 不需要全部匹配成功
+                        return
+                if count == length:
+                    # 全部匹配成功
+                    return
+            time.sleep(spacing)
+        log.error(f"Wait timeout: timeout={timeout}, spacing={spacing}")
+        raise TimeoutError(f"Wait timeout")
 
     def __image_filename(self, level: str) -> str:
         """ 获取图片保存名称 """
@@ -232,21 +337,3 @@ class GameController:
                             f"[{level}]" +
                             datetime.now().strftime("%Y-%m-%d (%H-%M-%S)") +
                             ".png")
-
-    def __to_game_pos(self, pos: Pos) -> Pos:
-        """ 将坐标转换成游戏坐标 """
-        rect = self.game.get_rect()
-        x1, y1 = pos.x, pos.y
-        x2, y2 = x1 + rect.left, y1 + rect.top
-        game_pos = Pos(x2, y2)
-        # 坐标转换成游戏内坐标
-        if x2 < rect.left or x2 > rect.right or y2 < rect.top or y2 > rect.bottom:
-            raise WindowOutOfBoundsError(f"The given coordinate ({x2}, {y2}) is outside "
-                                         f"the game window bounds "
-                                         f"({rect.left}, {rect.top}) - ({rect.right}, {rect.bottom})")
-            # 给出的坐标超出游戏窗口范围
-        return game_pos
-
-
-if __name__ == '__main__':
-    pass

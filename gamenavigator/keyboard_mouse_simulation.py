@@ -81,13 +81,5 @@ def keyboard_press(key: str) -> None:
     log.debug(f"keyboard press: {key}")
 
 
-class MouseSimulation:
-    pass
-
-
-class KeyboardSimulation:
-    pass
-
-
 if __name__ == '__main__':
     pass

@@ -6,9 +6,8 @@ class Pos:
         """
         Initialize a new Pos object.
 
-        Pos can be instantiated in two ways:
-        1. Pos(tuple): where tuple is of the form (x, y)
-        2. Pos(x, y): where x and y are integers
+        * Pos(tuple): where tuple is of the form (x, y)
+        * Pos(x, y): where x and y are integers
         """
         if len(args) == 1:
             arg = args[0]
@@ -25,6 +24,8 @@ class Pos:
                 raise TypeError("If two arguments are provided, they must be integers")
         else:
             raise TypeError("Pos takes either one tuple or two integers as arguments")
+
+        self.is_game = False
 
     @property
     def x(self) -> int:
