@@ -3,37 +3,37 @@ import logging
 from . import config
 
 # 使用logger记录日志
-log = logging.getLogger("GameWorldNavigator")
+logger = logging.getLogger("GameWorldNavigator")
 
 
 def debug(mes):
     if config.__log__:
-        log.debug(mes)
+        logger.debug(mes)
 
 
 def info(mes):
     if config.__log__:
-        log.info(mes)
+        logger.info(mes)
 
 
 def warning(mes):
     if config.__log__:
-        log.warning(mes)
+        logger.warning(mes)
 
 
 def error(mes):
     if config.__log__:
-        log.error(mes)
+        logger.error(mes)
 
 
 def critical(mes):
     if config.__log__:
-        log.critical(mes)
+        logger.critical(mes)
 
 
 if __name__ == '__main__':
-    log.debug('Debug message')
-    log.info('Info message')
-    log.warning('Warning message')
-    log.error('Error message')
-    log.critical('Critical message')
+    logger.debug('Debug message')
+    logger.info('Info message')
+    logger.warning('Warning message')
+    logger.error('Error message')
+    logger.critical('Critical message')
