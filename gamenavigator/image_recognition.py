@@ -33,7 +33,7 @@ def match_template(img: Union[str, np.ndarray, MatLike], template: Union[str, np
     img = __to_ndarray(img)
     template = __to_ndarray(template)
 
-    method = kwargs.get("method", cv2.TM_CCOEFF_NORMED)
+    method = kwargs.get("method", "TM_CCOEFF_NORMED")
     methods = ("TM_SQDIFF", "TM_SQDIFF_NORMED", "TM_CCOEFF_NORMED",
                "TM_CCORR_NORMED", "TM_CCORR", "TM_CCOEFF")
     mode = kwargs.get("mode", "color")
