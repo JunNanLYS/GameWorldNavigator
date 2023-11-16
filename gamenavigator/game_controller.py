@@ -15,10 +15,11 @@ from cv2.typing import MatLike
 from numpy import ndarray, array
 
 from .core import Pos, Rect
-from .keyboard_mouse_simulation import (mouse_click_position, mouse_move_to, mouse_press_and_move, keyboard_press,
-                                        keyboard_down, keyboard_up)
+from .keyboard_mouse_simulation import (mouse_click_position, mouse_move_to, mouse_press_and_move, mouse_scroll,
+                                        keyboard_press, keyboard_down, keyboard_up)
 from .image_recognition import match_template
-from .exception import TemplateMathingFailure, WindowOutOfBoundsError
+from .ocr_recognition import get_text_position
+from .exception import TemplateMathingFailure, WindowOutOfBoundsError, TextMatchingFailure
 from . import log
 
 
@@ -115,7 +116,7 @@ class GameController:
         将debug设置为True后需要设置filename才会将调试信息保存
 
         Args:
-            game_class(str, None): 游戏类型
+            game_class (str, None): 游戏类型
             game_name (str): 游戏名称
             debug (bool): 调试模式
             filename (str): 调试模式存储的文件路径
@@ -133,9 +134,9 @@ class GameController:
         self.set_foreground()
         try:
             self._click_pos(pos)
-        except WindowOutOfBoundsError as e:
+        except WindowOutOfBoundsError:
             self.image_debug("Error")
-            raise WindowOutOfBoundsError(e)
+            raise
 
     def click_image(self, *images: Union[str, ndarray, MatLike], **kwargs):
         """模拟鼠标点击游戏内图片API
@@ -152,9 +153,22 @@ class GameController:
         self.set_foreground()
         try:
             self._click_image(*images, **kwargs)
-        except TemplateMathingFailure as e:
+        except TemplateMathingFailure:
             self.image_debug("Error")
-            raise TemplateMathingFailure(e)
+            raise
+
+    def click_text(self, text: str, position: str = "center") -> None:
+        """模拟鼠标点击游戏内文字API
+
+        Args:
+            text (str): 文字
+            position (str): 文字位置(default "center") left, center, right
+        """
+        try:
+            self._click_text(text, position)
+        except TextMatchingFailure:
+            self.image_debug("Error")
+            raise
 
     def down_keyboard_time(self, key: str, stop_time: float, thread=False) -> Union[None, Thread]:
         """模拟按压键盘的时间
@@ -168,7 +182,6 @@ class GameController:
 
         Returns:
             None | Thread
-
         """
         self.set_foreground()
 
@@ -220,16 +233,32 @@ class GameController:
         self.set_foreground()
         try:
             self._mouse_move_to(pos, duration)
-        except WindowOutOfBoundsError as e:
+        except WindowOutOfBoundsError:
             self.image_debug("Error")
-            raise WindowOutOfBoundsError(e)
+            raise
 
     def mouse_press_and_move(self, start: Pos, end: Pos) -> None:
         """按压鼠标并移动到end松开API"""
         self.set_foreground()
-        start = self._to_game_pos(start)
-        end = self._to_game_pos(end)
+        try:
+            start = self._to_game_pos(start)
+            end = self._to_game_pos(end)
+        except WindowOutOfBoundsError:
+            self.image_debug("Error")
+            raise
         mouse_press_and_move(start, end)
+
+    def mouse_scroll(self, pos: Pos, scale: int, count: int, duration=0.0):
+        """鼠标移动至pos滚动scale刻度count次
+        Args:
+            pos (Pos): 坐标
+            scale (int): 刻度
+            count (int): 次数
+            duration (float): 移动到坐标点的时间
+        """
+        self.set_foreground()
+        self.mouse_move_to(pos, duration)
+        mouse_scroll(scale, count)
 
     def wait_image(self, *images: Union[str, ndarray, MatLike], **kwargs) -> None:
         """等待游戏内图片API
@@ -250,16 +279,16 @@ class GameController:
         self.set_foreground()
         try:
             self._wait_image(*images, **kwargs)
-        except TimeoutError as e:
+        except TimeoutError:
             self.image_debug("Error")
-            raise TimeoutError(e)
+            raise
 
-    def _click_pos(self, pos: Pos):
+    def _click_pos(self, pos: Pos) -> None:
         """ 点击游戏内某个坐标 """
         game_pos = self._to_game_pos(pos)
         mouse_click_position(game_pos)
 
-    def _click_image(self, *images: Union[str, ndarray, MatLike], **kwargs):
+    def _click_image(self, *images: Union[str, ndarray, MatLike], **kwargs) -> None:
         """ 点击游戏内图片 """
         threshold = kwargs.get("threshold", 0.8)
         mode = kwargs.get("mode", "color")
@@ -281,6 +310,24 @@ class GameController:
                 self.click_pos(center)
         log.error(f"template matching failure, max value is {v}")
         raise TemplateMathingFailure(f"Threshold: {v} < {threshold}, GamePos: {p}")
+
+    def _click_text(self, text: str, position: str = "center") -> None:
+        """ 点击游戏内文字 """
+        positions = get_text_position(self.game.get_screenshot(), text)
+        if positions.size == 0:
+            raise TextMatchingFailure(f"The text does not exist in the game")
+            # 没有匹配到相关的文字
+        index = 0
+        if position == "center":
+            index = (positions.size - 1) // 2
+            if index < 0:
+                index = 0
+        elif position == "right":
+            index = -1
+        position = positions[index]
+        x, y = position
+        pos = Pos(int(x), int(y))
+        self.click_pos(pos)
 
     def _mouse_move_to(self, pos: Pos, duration: float) -> None:
         """ 将鼠标移动至某坐标点上 """
