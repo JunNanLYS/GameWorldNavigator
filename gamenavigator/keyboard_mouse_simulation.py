@@ -36,8 +36,10 @@ def mouse_click_position(pos: Pos, button: str = "left") -> None:
 def mouse_scroll(scale: int, count: int = 1) -> None:
     """鼠标滚轮滚动
     这个“刻度”的具体滚动距离取决于你的系统设置和鼠标驱动。
-    :param scale: 刻度
-    :param count: 次数
+
+    Args:
+        scale (int): 刻度
+        count (int): 次数
     """
     for _ in range(count):
         try:
@@ -46,7 +48,7 @@ def mouse_scroll(scale: int, count: int = 1) -> None:
             print("Scrolling stopped due to failure.")
             break
         time.sleep(0.1)  # 添加0.1秒的延迟
-    log.debug(f"mouse scroll: [scale|{scale}], [count|{count}]")
+    log.debug(f"mouse scroll scale : {scale}, count : {count}")
 
 
 def mouse_press_and_move(start: Pos, end: Pos, button='left') -> None:
