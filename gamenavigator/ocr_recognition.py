@@ -3,6 +3,8 @@
 from ppocronnx import TextSystem
 from numpy import ndarray, array
 
+from . import log
+
 system = TextSystem(use_angle_cls=False)
 
 
@@ -34,9 +36,12 @@ def get_text_position(img: ndarray, text: str) -> ndarray:
                 similarity_val = box.score
                 similarity = box.box
     if equal is not None:
+        log.debug("have equal text")
         return equal
     elif similarity is not None:
+        log.debug("have similarity text")
         return similarity
+    log.debug("There are no equal or similar texts")
     return array([])
 
 
