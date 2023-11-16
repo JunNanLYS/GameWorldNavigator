@@ -1,10 +1,10 @@
 import setuptools
 
-with open("README.md", "r") as f:
+with open("README.md", "r", encoding='utf-8') as f:
     long_description = f.read()
 
 setuptools.setup(
-    name="Game-World-Navigator",
+    name="GameWorldNavigator",
     version="0.0.2",
     author="NanJunLYS",
     author_email="18906571516@163.com",
