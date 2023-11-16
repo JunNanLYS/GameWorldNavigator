@@ -10,6 +10,10 @@ class TemplateMathingFailure(ErrorBase):
     pass
 
 
+class TextMatchingFailure(ErrorBase):
+    pass
+
+
 class WindowOutOfBoundsError(ErrorBase):
     pass
 
