@@ -54,7 +54,7 @@ class Game:
         self._game_name = game_name
         self._hwnd = win32gui.FindWindow(game_class, game_name)
 
-        log.debug(f"class:{game_class}, name: {game_name}, hwnd: {self._hwnd}")
+        log.debug(f"class : {game_class}, name : {game_name}, hwnd : {self._hwnd}")
 
     @property
     def cls(self) -> str:
@@ -141,7 +141,7 @@ class GameController:
     def click_image(self, *images: Union[str, ndarray, MatLike], **kwargs):
         """模拟鼠标点击游戏内图片API
 
-        鼠标点击图片中心位置
+        鼠标点击图片中心位置，若传入多个图像则只会点击一个
 
         Args:
             images (str, ndarray, MatLike): 图像
@@ -296,6 +296,8 @@ class GameController:
         v, p = 0, Pos(0, 0)
         log.debug(f"click image: threshold={threshold}, mode={mode}")
         for image in images:
+            if isinstance(image, str):
+                image = cv2.imread(image)
             _, max_val, _, max_loc = match_template(screenshot, image, mode=mode)
             if max_val < threshold:
                 if max_val > v:
@@ -305,9 +307,10 @@ class GameController:
                 # 低于阈值的跳过
             else:
                 log.debug(f"max_val={max_val}, threshold={threshold}")
-                w, h = screenshot.shape[:1]
+                h, w = image.shape[:2]
                 center = Pos(max_loc[0] + w // 2, max_loc[1] + h // 2)
                 self.click_pos(center)
+                return
         log.error(f"template matching failure, max value is {v}")
         raise TemplateMathingFailure(f"Threshold: {v} < {threshold}, GamePos: {p}")
 
