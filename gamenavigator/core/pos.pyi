@@ -1,0 +1,23 @@
+from typing import Union, Tuple
+
+
+class Pos:
+    is_game: bool
+    _x: int
+    _y: int
+
+    def __init__(self, *args: Union[Tuple[int, int], int]) -> None: ...
+
+    @property
+    def x(self) -> int: ...
+
+    @property
+    def y(self) -> int: ...
+
+    def __add__(self, other: "Pos") -> "Pos": ...
+
+    def __sub__(self, other: "Pos") -> "Pos": ...
+
+    def __str__(self) -> str: ...
+
+    def __repr__(self) -> str: ...
