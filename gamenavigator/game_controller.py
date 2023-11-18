@@ -49,7 +49,7 @@ class Game:
         :param game_class: 游戏类名
         :param game_name: 游戏名称
         """
-        self.screenshot = None
+        self.screenshot: ndarray
         self._game_class = game_class
         self._game_name = game_name
         self._hwnd = win32gui.FindWindow(game_class, game_name)
@@ -149,6 +149,8 @@ class GameController:
         Keyword Arguments:
             threshold (int, float): 匹配阈值(default 0.8)
             mode (str): 匹配模式(default)
+            x (int): x偏移 (default 0)
+            y (int): y偏移 (default 0)
         """
         self.set_foreground()
         try:
@@ -157,15 +159,19 @@ class GameController:
             self.image_debug("Error")
             raise
 
-    def click_text(self, text: str, position: str = "center") -> None:
+    def click_text(self, text: str, position: str = "center", **kwargs) -> None:
         """模拟鼠标点击游戏内文字API
 
         Args:
             text (str): 文字
             position (str): 文字位置(default "center") left, center, right
+
+        Keyword Arguments:
+            x (int): x偏移 (default 0)
+            y (int): y偏移 (default 0)
         """
         try:
-            self._click_text(text, position)
+            self._click_text(text, position, **kwargs)
         except TextMatchingFailure:
             self.image_debug("Error")
             raise
@@ -290,6 +296,8 @@ class GameController:
 
     def _click_image(self, *images: Union[str, ndarray, MatLike], **kwargs) -> None:
         """ 点击游戏内图片 """
+        x = kwargs.get("x", 0)
+        y = kwargs.get("y", 0)
         threshold = kwargs.get("threshold", 0.8)
         mode = kwargs.get("mode", "color")
         screenshot = self.game.get_screenshot()
@@ -309,13 +317,17 @@ class GameController:
                 log.debug(f"max_val={max_val}, threshold={threshold}")
                 h, w = image.shape[:2]
                 center = Pos(max_loc[0] + w // 2, max_loc[1] + h // 2)
+                center += Pos(x, y)
                 self.click_pos(center)
                 return
         log.error(f"template matching failure, max value is {v}")
         raise TemplateMathingFailure(f"Threshold: {v} < {threshold}, GamePos: {p}")
 
-    def _click_text(self, text: str, position: str = "center") -> None:
+    def _click_text(self, text: str, position: str = "center", **kwargs) -> None:
         """ 点击游戏内文字 """
+        x = kwargs.get("x", 0)
+        y = kwargs.get("y", 0)
+        add_pos = Pos(x, y)
         positions = get_text_position(self.game.get_screenshot(), text)
         if positions.size == 0:
             raise TextMatchingFailure(f"The text does not exist in the game")
@@ -329,7 +341,7 @@ class GameController:
             index = -1
         position = positions[index]
         x, y = position
-        pos = Pos(int(x), int(y))
+        pos = Pos(int(x), int(y)) + add_pos
         self.click_pos(pos)
 
     def _mouse_move_to(self, pos: Pos, duration: float) -> None:
