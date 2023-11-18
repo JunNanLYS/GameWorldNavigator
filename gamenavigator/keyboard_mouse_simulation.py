@@ -62,7 +62,23 @@ def mouse_press_and_move(start: Pos, end: Pos, button='left') -> None:
     pyautogui.mouseDown(x1, y1, button)
     pyautogui.moveTo(x2, y2, duration=1)
     pyautogui.mouseUp(x1, y1)
-    log.debug(f"mouse down move: [start|{start}], [end|{end}]")
+    log.debug(f"mouse down move start : {start}, end : {end}")
+
+
+def mouse_click(button: str) -> None:
+    """鼠标点击
+
+    Args:
+        button (str): left or right (default left)
+    """
+    button = button.lower()
+    if button == "left":
+        pyautogui.leftClick()
+    elif button == "right":
+        pyautogui.rightClick()
+    else:
+        ValueError(f"button must be left or right, not {button}")
+    log.debug(f"mouse click button : {button}")
 
 
 def keyboard_down(key: str) -> None:
