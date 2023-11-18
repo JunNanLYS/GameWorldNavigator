@@ -5,7 +5,7 @@ with open("README.md", "r", encoding='utf-8') as f:
 
 setuptools.setup(
     name="GameWorldNavigator",
-    version="0.0.6.2",
+    version="0.0.6.3",
     author="NanJunLYS",
     author_email="18906571516@163.com",
     description="A framework for game automation",
