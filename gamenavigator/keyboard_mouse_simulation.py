@@ -51,11 +51,13 @@ def mouse_scroll(scale: int, count: int = 1) -> None:
     log.debug(f"mouse scroll scale : {scale}, count : {count}")
 
 
-def mouse_press_and_move(start: Pos, end: Pos, button='left') -> None:
-    """按压鼠标移动到达目标点放开
-    :param start: 鼠标起点
-    :param end: 鼠标终点
-    :param button: 鼠标按键 left right
+def mouse_drag(start: Pos, end: Pos, button='left') -> None:
+    """鼠标拖拽
+
+    Args:
+        start (Pos): 起点
+        end (Pos): 终点
+        button (str): 鼠标按键. (default left)
     """
     x1, y1 = start.x, start.y
     x2, y2 = end.x, end.y
@@ -69,16 +71,24 @@ def mouse_click(button: str) -> None:
     """鼠标点击
 
     Args:
-        button (str): left or right (default left)
+        button (str): left or right or middle (default left)
     """
     button = button.lower()
     if button == "left":
         pyautogui.leftClick()
     elif button == "right":
         pyautogui.rightClick()
+    elif button == "middle":
+        pyautogui.middleClick()
     else:
         ValueError(f"button must be left or right, not {button}")
     log.debug(f"mouse click button : {button}")
+
+
+def mouse_double_click() -> None:
+    """ 双击左键 """
+    pyautogui.doubleClick()
+    log.debug("mouse double click")
 
 
 def keyboard_down(key: str) -> None:
