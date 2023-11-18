@@ -15,8 +15,8 @@ from cv2.typing import MatLike
 from numpy import ndarray, array
 
 from .core import Pos, Rect
-from .keyboard_mouse_simulation import (mouse_click_position, mouse_move_to, mouse_press_and_move, mouse_scroll,
-                                        keyboard_press, keyboard_down, keyboard_up)
+from .keyboard_mouse_simulation import (mouse_click_position, mouse_move_to, mouse_scroll,
+                                        keyboard_press, keyboard_down, keyboard_up, mouse_drag)
 from .image_recognition import match_template
 from .ocr_recognition import get_text_position
 from .exception import TemplateMathingFailure, WindowOutOfBoundsError, TextMatchingFailure
@@ -203,6 +203,11 @@ class GameController:
             # 运行子线程并且返回子线程
         func()
         # 阻塞当前线程直到达到按压时长
+        return None
+
+    def get_screenshot(self) -> ndarray:
+        """ 获取游戏截图 """
+        return self.game.get_screenshot()
 
     def image_debug(self, level="Debug") -> None:
         """ 保存调试照片 """
@@ -243,7 +248,7 @@ class GameController:
             self.image_debug("Error")
             raise
 
-    def mouse_press_and_move(self, start: Pos, end: Pos) -> None:
+    def mouse_drag(self, start: Pos, end: Pos, button="left") -> None:
         """按压鼠标并移动到end松开API"""
         self.set_foreground()
         try:
@@ -252,7 +257,7 @@ class GameController:
         except WindowOutOfBoundsError:
             self.image_debug("Error")
             raise
-        mouse_press_and_move(start, end)
+        mouse_drag(start, end, button)
 
     def mouse_scroll(self, pos: Pos, scale: int, count: int, duration=0.0):
         """鼠标移动至pos滚动scale刻度count次
@@ -301,7 +306,7 @@ class GameController:
         threshold = kwargs.get("threshold", 0.8)
         mode = kwargs.get("mode", "color")
         screenshot = self.game.get_screenshot()
-        v, p = 0, Pos(0, 0)
+        v, p = 0.0, Pos(0, 0)
         log.debug(f"click image: threshold={threshold}, mode={mode}")
         for image in images:
             if isinstance(image, str):
