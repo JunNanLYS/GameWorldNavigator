@@ -21,7 +21,7 @@ class Rect:
     def right(self) -> int:
         return self._right
 
-    def rect(self) -> tuple:
+    def rect(self) -> tuple[int, int, int, int]:
         return self._left, self._top, self._right, self.bottom
 
     def __str__(self):
