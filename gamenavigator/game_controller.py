@@ -57,7 +57,7 @@ class Game:
         log.debug(f"class : {game_class}, name : {game_name}, hwnd : {self._hwnd}")
 
     @property
-    def cls(self) -> str:
+    def cls(self) -> Union[str, None]:
         return self._game_class
 
     @property
@@ -170,6 +170,10 @@ class GameController:
             x (int): x偏移 (default 0)
             y (int): y偏移 (default 0)
         """
+        if not isinstance(text, str):
+            raise TypeError("text must is str type")
+        if not isinstance(position, str):
+            raise TypeError("position must is str type")
         try:
             self._click_text(text, position, **kwargs)
         except TextMatchingFailure:
@@ -189,6 +193,10 @@ class GameController:
         Returns:
             None | Thread
         """
+        if not isinstance(stop_time, float):
+            raise TypeError("param stop_time must is float type")
+        if not isinstance(thread, bool):
+            raise TypeError("param thread must is bool type")
         self.set_foreground()
 
         def func():
@@ -211,6 +219,8 @@ class GameController:
 
     def image_debug(self, level="Debug") -> None:
         """ 保存调试照片 """
+        if not isinstance(level, str):
+            raise TypeError("param level must is str type")
         if self.debug and self.filename:
             filename = self.__image_filename(level)
             cv2.imwrite(filename, self.game.screenshot)
@@ -305,10 +315,20 @@ class GameController:
         y = kwargs.get("y", 0)
         threshold = kwargs.get("threshold", 0.8)
         mode = kwargs.get("mode", "color")
+        if not isinstance(x, int):
+            raise TypeError("param x must is int type")
+        if not isinstance(y, int):
+            raise TypeError("param y must is int type")
+        if not isinstance(threshold, (int, float)):
+            raise TypeError("param threshold must is int or float type")
+        if not isinstance(mode, str):
+            raise TypeError("param mode must is str type")
         screenshot = self.game.get_screenshot()
         v, p = 0.0, Pos(0, 0)
         log.debug(f"click image: threshold={threshold}, mode={mode}")
         for image in images:
+            if not isinstance(image, (str, ndarray)):
+                raise TypeError("param image must is str or ndarray type")
             if isinstance(image, str):
                 image = cv2.imread(image)
             _, max_val, _, max_loc = match_template(screenshot, image, mode=mode)
@@ -380,6 +400,16 @@ class GameController:
         spacing = kwargs.get("spacing", 1)  # second
         start_time = time.time()
         length = len(images)
+        if not isinstance(all_, bool):
+            raise TypeError("param all must is bool type")
+        if not isinstance(threshold, (int, float)):
+            raise TypeError("param threshold must is int or float type")
+        if not isinstance(mode, str):
+            raise TypeError("param mode must is str type")
+        if not isinstance(timeout, int):
+            raise TypeError("param timeout must is int type")
+        if not isinstance(spacing, int):
+            raise TypeError("param spacing must is int type")
 
         while time.time() - start_time <= timeout:
             count = 0
